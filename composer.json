@@ -1,7 +1,7 @@
 {
-    "name": "azuracast/nowplaying",
-    "description": "A lightweight PHP adapter for viewing the current now playing data in Icecast and SHOUTcast 1/2. A part of the AzuraCast software suite.",
-    "license": "Apache-2.0",
+    "name": "bytelus/nowplaying",
+    "description": "A lightweight PHP adapter for viewing the current now playing data in Icecast and SHOUTcast 1/2. A part of the Radiolize software suite.",
+    "license": "proprietary",
     "require": {
         "php": ">=7.4",
         "ext-simplexml": "*",
@@ -32,8 +32,8 @@
     },
     "authors": [
         {
-            "name": "Buster Neece",
-            "email": "buster@busterneece.com"
+            "name": "Bytelus OÜ",
+            "email": "bytelusdev@gmail.com"
         }
     ],
     "autoload": {
