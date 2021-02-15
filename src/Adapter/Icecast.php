@@ -215,7 +215,7 @@ final class Icecast extends AdapterAbstract
                 $clients[] = new Client(
                     (string)$listener->ID,
                     (string)$listener->IP,
-                    (string)$listener->UserAgent,
+                    (string)$listener->UserAgent . uniqid(),
                     (int)$listener->Connected,
                     $mount
                 );
