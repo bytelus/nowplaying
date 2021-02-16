@@ -7,7 +7,7 @@ NowPlaying is a lightweight, modern, object-oriented PHP library that abstracts 
 NowPlaying is a Composer package that you can include in your project by running:
 
 ```bash
-composer require azuracast/nowplaying
+composer require bytelus/nowplaying
 ```
 
 ### Compatibility
