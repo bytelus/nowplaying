@@ -212,11 +212,11 @@ final class Icecast extends AdapterAbstract
 
         if ((int)$xml->source->listeners > 0) {
             foreach ($xml->source->listener as $listener) {
-                $listener_useragent_random = $listener->UserAgent . rand();
+
                 $clients[] = new Client(
                     (string)$listener->ID,
                     (string)$listener->IP,
-                    (string)$listener_useragent_random,
+                    (string)$listener->UserAgent,
                     (int)$listener->Connected,
                     $mount
                 );

@@ -118,7 +118,7 @@ abstract class AdapterAbstract implements AdapterInterface
     {
         $uniqueClients = [];
         foreach ($clients as $client) {
-            $clientHash = md5($client->ip . $client->userAgent . rand());
+            $clientHash = md5($client->ip . $client->userAgent);
             if (!isset($uniqueClients[$clientHash])) {
                 $uniqueClients[$clientHash] = $client;
             }
