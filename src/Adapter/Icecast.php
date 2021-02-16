@@ -33,7 +33,7 @@ final class Icecast extends AdapterAbstract
         }
 
         if ($includeClients && !empty($this->adminPassword)) {
-            $np->clients = $this->getClients($mount, true);
+            $np->clients = $this->getClients($mount, false);
 
             $np->listeners = new Listeners(
                 $np->listeners->current,
