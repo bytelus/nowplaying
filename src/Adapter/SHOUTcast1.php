@@ -1,6 +1,10 @@
 <?php
+
+declare(strict_types=1);
+
 namespace NowPlaying\Adapter;
 
+use NowPlaying\Exception\UnsupportedException;
 use NowPlaying\Result\CurrentSong;
 use NowPlaying\Result\Listeners;
 use NowPlaying\Result\Meta;
@@ -20,24 +24,23 @@ final class SHOUTcast1 extends AdapterAbstract
             return Result::blank();
         }
 
-        preg_match("/<body.*>(.*)<\/body>/smU", $returnRaw, $return);
-        [$current_listeners, , , , $unique_listeners, $bitrate, $title] = explode(',', $return[1], 7);
+        preg_match('/<body.*>(.*)<\\/body>/smU', $returnRaw, $return);
+        [$total_listeners, , , , $unique_listeners, $bitrate, $title] = explode(',', $return[1], 7);
 
         // Increment listener counts in the now playing data.
-        $np = new Result;
+        $np = new Result();
         $np->currentSong = new CurrentSong($title);
-        $np->listeners = new Listeners($current_listeners, $unique_listeners);
+        $np->listeners = new Listeners((int) $total_listeners, (int) $unique_listeners);
         $np->meta = new Meta(
             !empty($np->currentSong->text),
-            $bitrate
+            (int) $bitrate
         );
 
         return $np;
     }
 
-    public function getClients(?string $mount = null, bool $uniqueOnly = true): array
+    public function getClients(?string $mount = null, bool $uniqueOnly = false): array
     {
-        $this->logger->critical('This feature is not implemented for this adapter.');
-        return [];
+        throw new UnsupportedException();
     }
 }

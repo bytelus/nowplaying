@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace NowPlaying\Result;
 
 use JsonException;
@@ -14,6 +17,16 @@ final class Result
     /** @var null|Client[] */
     public ?array $clients = null;
 
+    public function __clone()
+    {
+        $this->listeners = clone $this->listeners;
+        $this->currentSong = clone $this->currentSong;
+        $this->meta = clone $this->meta;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         try {
@@ -33,9 +46,15 @@ final class Result
         }
 
         // Sum listeners
-        $currentListeners = $dest->listeners->current + $source->listeners->current;
-        $uniqueListeners = $dest->listeners->unique + $source->listeners->unique;
-        $dest->listeners = new Listeners($currentListeners, $uniqueListeners);
+        $totalListeners = $dest->listeners->total + $source->listeners->total;
+
+        if (null === $source->listeners->unique) {
+            $uniqueListeners = $dest->listeners->unique ?? null;
+        } else {
+            $uniqueListeners = $source->listeners->unique + ($dest->listeners->unique ?? 0);
+        }
+
+        $dest->listeners = new Listeners($totalListeners, $uniqueListeners);
 
         // Update metadata
         if (!$dest->meta->online && $source->meta->online) {
@@ -58,26 +77,24 @@ final class Result
         return $dest;
     }
 
-    public function __clone()
-    {
-        $this->listeners = clone $this->listeners;
-        $this->currentSong = clone $this->currentSong;
-        $this->meta = clone $this->meta;
-    }
-
     public static function blank(): self
     {
-        $return = new self;
-        $return->currentSong = new CurrentSong;
-        $return->listeners = new Listeners;
-        $return->meta = new Meta;
+        $return = new self();
+        $return->currentSong = new CurrentSong();
+        $return->listeners = new Listeners();
+        $return->meta = new Meta();
 
         return $return;
     }
 
+    /**
+     * @param array<string,mixed> $np
+     *
+     * @return static
+     */
     public static function fromArray(array $np): self
     {
-        $result = new self;
+        $result = new self();
 
         $currentSong = $np['currentSong'] ?? $np['current_song'] ?? [];
         $result->currentSong = new CurrentSong(
@@ -88,9 +105,8 @@ final class Result
 
         $listeners = $np['listeners'];
         $result->listeners = new Listeners(
-            $listeners['current'] ?? 0,
-            $listeners['unique'] ?? null,
-            $listeners['total'] ?? null
+            $listeners['total'] ?? $listeners['current'] ?? 0,
+            $listeners['unique'] ?? null
         );
 
         $meta = $np['meta'];

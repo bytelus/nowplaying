@@ -9,3 +9,5 @@ tmp/cache/*---*
 
 # Composer-generated content
 /vendor/
+
+composer.lock

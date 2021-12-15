@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NowPlaying\Adapter;
 
 use JsonException;
@@ -46,26 +48,26 @@ final class SHOUTcast2 extends AdapterAbstract
         }
 
         // Fix ShoutCast 2 bug where 3 spaces = " - "
-        $currentSongText = (string)$xml->SONGTITLE;
+        $currentSongText = (string) $xml->SONGTITLE;
         $currentSongText = str_replace('   ', ' - ', $currentSongText);
 
-        $np = new Result;
+        $np = new Result();
         $np->currentSong = new CurrentSong($currentSongText);
         $np->listeners = new Listeners(
-            (int)$xml->CURRENTLISTENERS,
-            (int)$xml->UNIQUELISTENERS
+            (int) $xml->CURRENTLISTENERS,
+            (int) $xml->UNIQUELISTENERS
         );
         $np->meta = new Meta(
             !empty($np->currentSong->text),
-            (int)$xml->BITRATE,
-            (string)$xml->CONTENT
+            (int) $xml->BITRATE,
+            (string) $xml->CONTENT
         );
 
         if ($includeClients && !empty($this->adminPassword)) {
-            $np->clients = $this->getClients($mount, true);
+            $np->clients = $this->getClients($mount, false);
 
             $np->listeners = new Listeners(
-                $np->listeners->current,
+                $np->listeners->total,
                 count($np->clients)
             );
         }
@@ -73,7 +75,7 @@ final class SHOUTcast2 extends AdapterAbstract
         return $np;
     }
 
-    public function getClients(?string $mount = null, bool $uniqueOnly = true): array
+    public function getClients(?string $mount = null, bool $uniqueOnly = false): array
     {
         $query = [
             'sid' => (empty($mount)) ? 1 : $mount,
@@ -102,20 +104,21 @@ final class SHOUTcast2 extends AdapterAbstract
                     'response' => $return_raw,
                 ]
             );
+
             return [];
         }
 
         $clients = array_map(
             function ($listener) use ($mount) {
                 return new Client(
-                    $listener['uid'],
-                    $listener['xff'] ?: $listener['hostname'],
-                    $listener['useragent'],
-                    $listener['connecttime'],
+                    (string) $listener['uid'],
+                    (string) $listener['xff'] ?: $listener['hostname'],
+                    (string) $listener['useragent'],
+                    (int) $listener['connecttime'],
                     $mount
                 );
             },
-            (array)$listeners
+            (array) $listeners
         );
 
         return $uniqueOnly

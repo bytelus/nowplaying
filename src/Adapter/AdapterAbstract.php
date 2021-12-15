@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace NowPlaying\Adapter;
 
 use NowPlaying\Result\Client;
@@ -30,6 +33,17 @@ abstract class AdapterAbstract implements AdapterInterface
         LoggerInterface $logger,
         UriInterface $baseUri
     ) {
+        // Detect a username/password in the base URI itself.
+        $uriUserInfo = $baseUri->getUserInfo();
+        if ('' !== $uriUserInfo) {
+            [$uriUsername, $uriPassword] = explode(':', $uriUserInfo);
+
+            $this->setAdminUsername($uriUsername);
+            $this->setAdminPassword($uriPassword);
+
+            $baseUri = $baseUri->withUserInfo('');
+        }
+
         $this->requestFactory = $requestFactory;
         $this->client = $client;
         $this->logger = $logger;
@@ -51,21 +65,17 @@ abstract class AdapterAbstract implements AdapterInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     abstract public function getNowPlaying(?string $mount = null, bool $includeClients = false): Result;
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
-    abstract public function getClients(?string $mount = null, bool $uniqueOnly = true): array;
+    abstract public function getClients(?string $mount = null, bool $uniqueOnly = false): array;
 
     /**
      * Fetch a remote URL.
-     *
-     * @param RequestInterface $request
-     *
-     * @return string|null
      */
     protected function getUrl(RequestInterface $request): ?string
     {
@@ -79,31 +89,40 @@ abstract class AdapterAbstract implements AdapterInterface
         if (null !== $this->adminPassword) {
             $request = $request->withHeader(
                 'Authorization',
-                'Basic ' . base64_encode($this->adminUsername . ':' . $this->adminPassword)
+                'Basic '.base64_encode($this->adminUsername.':'.$this->adminPassword)
             );
         }
 
-        $this->logger->debug(sprintf(
-            'Sending %s request to %s',
-            strtoupper($request->getMethod()),
-            (string)$request->getUri()
-        ));
+        $this->logger->debug(
+            sprintf(
+                'Sending %s request to %s',
+                strtoupper($request->getMethod()),
+                (string) $request->getUri()
+            )
+        );
 
         $response = $this->client->sendRequest($request);
 
-        if ($response->getStatusCode() !== 200) {
-            $this->logger->error(sprintf('Request returned status code %d.', $response->getStatusCode()), [
-                'body' => (string)$request->getBody(),
-            ]);
+        if (200 !== $response->getStatusCode()) {
+            $this->logger->error(
+                sprintf('Request returned status code %d.', $response->getStatusCode()),
+                [
+                    'body' => (string) $request->getBody(),
+                ]
+            );
+
             return null;
         }
 
-        $body = (string)$response->getBody();
+        $body = (string) $response->getBody();
 
-        $this->logger->debug('Raw body from response.', [
-            'response' => $body,
-        ]);
-        
+        $this->logger->debug(
+            'Raw body from response.',
+            [
+                'response' => $body,
+            ]
+        );
+
         return $body;
     }
 
@@ -118,7 +137,7 @@ abstract class AdapterAbstract implements AdapterInterface
     {
         $uniqueClients = [];
         foreach ($clients as $client) {
-            $clientHash = md5($client->ip . $client->userAgent);
+            $clientHash = md5($client->ip.$client->userAgent);
             if (!isset($uniqueClients[$clientHash])) {
                 $uniqueClients[$clientHash] = $client;
             }
@@ -129,15 +148,11 @@ abstract class AdapterAbstract implements AdapterInterface
 
     /**
      * Given a raw XML string, sanitize it for invalid characters and parse it with SimpleXML.
-     *
-     * @param string $xmlString
-     *
-     * @return SimpleXMLElement|null
      */
     protected function getSimpleXml(string $xmlString): ?SimpleXMLElement
     {
         $xmlString = html_entity_decode($xmlString);
-        $xmlString = preg_replace('/&(?!#?[a-z0-9]+;)/', '&amp;', $xmlString);
+        $xmlString = preg_replace('/&(?!#?[a-z0-9]+;)/', '&amp;', $xmlString) ?? '';
 
         libxml_use_internal_errors(true);
         $xml = simplexml_load_string($xmlString);
@@ -150,10 +165,14 @@ abstract class AdapterAbstract implements AdapterInterface
 
             libxml_clear_errors();
 
-            $this->logger->error('Error parsing XML response.', [
-                'response' => $xmlString,
-                'errors' => $xml_errors,
-            ]);
+            $this->logger->error(
+                'Error parsing XML response.',
+                [
+                    'response' => $xmlString,
+                    'errors' => $xml_errors,
+                ]
+            );
+
             return null;
         }
 
